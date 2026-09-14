@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zero Limit - ระบบเติมเงินและสุ่มรหัส (แยกกระเป๋าเหรียญรายบุคคล)</title>
+    <title>SunNewJiw - ระบบเติมเงินและสุ่มรหัส (แยกกระเป๋าเหรียญรายบุคคล)</title>
     <style>
         * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
         body { background: #1a1a1a; font-family: sans-serif; margin: 0; color: white; overflow-x: hidden; }
@@ -80,14 +80,14 @@
     <!-- แถบด้านบน -->
     <div class="top-nav">
         <div class="menu-icon" onclick="toggleMenu()">☰</div>
-        <div class="logo">Zero Limit Shop</div>
+        <div class="logo">SunNewJiw Shop</div>
         <div class="coin-display">เหรียญ: <span id="coin-count">0</span></div>
     </div>
 
     <!-- เมนู Sidebar -->
     <div id="sidebar" class="sidebar">
         <div class="sidebar-header">
-            <span>Zero Limit</span>
+            <span>SunNewJiw</span>
             <span onclick="toggleMenu()" style="cursor:pointer">✕</span>
         </div>
         <div style="padding: 15px 25px; color: #ff416c; font-weight: bold; background: #1f1f1f;">
@@ -111,9 +111,8 @@
         <!-- 1. หน้าเข้าสู่ระบบ -->
         <div id="login-page" class="card">
             <h2>เข้าสู่ระบบ</h2>
-            <div class="dev-notice" style="color:rgb(255, 255, 255);">กรุณาเข้าสู่ระบบก่อนเติมเงินและสุ่มรหัส รหัสแอดมิน
-            ชื่อ qawsedr.gz รหัส qawsedr123</div>
-            <input type="text" id="login-email" placeholder="ใส่อีเมล">
+            <div class="dev-notice" style="color:rgb(255, 255, 255);">กรุณาเข้าสู่ระบบก่อนเติมเงินและสุ่มรหัส<br>รหัสแอดมิน: ชื่อ **qawsedr.gz** | รหัส **qawsedr123**</div>
+            <input type="text" id="login-email" placeholder="ใส่อีเมลหรือชื่อผู้ใช้">
             <input type="password" id="login-password" placeholder="รหัสผ่าน">
             <button class="btn" onclick="login()">เข้าสู่ระบบ</button>
             <div class="card-link">
@@ -189,7 +188,7 @@
         <!-- 5. หน้าผู้จัดทำ (Creator Page - ไม่มีรูปภาพ) -->
         <div id="creator-page" class="creator-container hidden">
             <div class="section-box">
-                <h2 style="color: #ff416c; margin-top:0;">👨‍💻 คณะผู้จัดทำเว็บไซต์ Zero Limit</h2>
+                <h2 style="color: #ff416c; margin-top:0;">👨‍💻 คณะผู้จัดทำเว็บไซต์ SunNewJiw</h2>
                 <p style="font-size: 14px; color: #aaa;">รายชื่อผู้พัฒนาและดูแลระบบเว็บไซต์ทั้งหมด</p>
                 <button class="btn" onclick="goHome()" style="width: auto; padding: 8px 15px; margin-top: 5px;">← กลับสู่หน้าหลักร้านค้า</button>
             </div>
@@ -375,7 +374,11 @@
         let selectedCategoryName = "";
 
         function getUsers() {
-            return JSON.parse(localStorage.getItem('allUsers')) || [];
+            try {
+                return JSON.parse(localStorage.getItem('allUsers')) || [];
+            } catch (e) {
+                return [];
+            }
         }
 
         function saveUsers(users) {
@@ -386,7 +389,7 @@
             const currentEmail = localStorage.getItem('currentLoggedInEmail');
             if (!currentEmail) return null;
             const users = getUsers();
-            return users.find(u => u.email === currentEmail) || null;
+            return users.find(u => u.email === currentEmail || u.name === currentEmail) || null;
         }
 
         function updateCurrentUser(updatedUser) {
@@ -431,6 +434,13 @@
         window.onload = function() {
             updateCoinDisplay();
             updateStockDisplay();
+            const user = getCurrentUser();
+            if (user) {
+                hideAllPages();
+                document.getElementById('random-page').classList.remove('hidden');
+            } else {
+                showLogin();
+            }
         };
 
         function toggleMenu() {
@@ -574,22 +584,36 @@
             }
 
             let users = getUsers();
-            if (users.some(u => u.email === email)) {
-                alert("⚠️ อีเมลนี้ถูกใช้งานสมัครสมาชิกไปแล้ว!");
+            if (users.some(u => u.email === email || u.name === name)) {
+                alert("⚠️ อีเมลหรือชื่อผู้ใช้นี้ถูกใช้งานสมัครสมาชิกไปแล้ว!");
                 return;
             }
 
-            users.push({
+            const newUser = {
                 name: name,
                 email: email,
                 password: pass,
                 coins: 0,
                 history: ""
-            });
+            };
+
+            users.push(newUser);
             saveUsers(users);
 
-            alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
-            showLogin();
+            // บันทึกสถานะว่าล็อกอินเข้าสู่ระบบด้วยอีเมลนี้ทันที
+            localStorage.setItem('currentLoggedInEmail', newUser.email);
+
+            // ล้างค่าในช่องกรอก
+            document.getElementById('reg-name').value = "";
+            document.getElementById('reg-email').value = "";
+            document.getElementById('reg-password').value = "";
+
+            alert(`🎉 สมัครสมาชิกสำเร็จ! ยินดีต้อนรับเข้าสู่ระบบ คุณ ${newUser.name}`);
+            
+            // อัปเดตหน้าจอแล้วเด้งเข้าหน้าหลักทันที
+            updateCoinDisplay();
+            hideAllPages();
+            document.getElementById('random-page').classList.remove('hidden');
         }
 
         function login() {
@@ -611,7 +635,7 @@
                 hideAllPages();
                 document.getElementById('random-page').classList.remove('hidden');
             } else {
-                alert("อีเมล หรือรหัสผ่านไม่ถูกต้อง!");
+                alert("อีเมล/ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง!");
             }
         }
 
